@@ -97,7 +97,7 @@ WHERE	custid=2;
 --[질의 3-17] 고객이 주문한 도서의 총 판매액, 평균값, 최저가, 최고가를 구하시오.
 SELECT	SUM(saleprice) AS Total,
 		AVG(saleprice) AS Average,
-		MIN(saleprice) AS Minimum,
+		MIN(saleprice) AS MINIMUM,
 		MAX(saleprice) AS Maximum
 FROM	Orders;
 
@@ -129,34 +129,34 @@ WHERE	Customer.custid=Orders.custid
 ORDER BY	Customer.custid;
 
 --[질의 3-23] 고객의 이름과 고객이 주문한 도서의 판매가격을 검색하시오.
-SELECT	name, saleprice
+SELECT	NAME, saleprice
 FROM	Customer, Orders
 WHERE	Customer.custid=Orders.custid;
 
 --[질의 3-24] 고객별로 주문한 모든 도서의 총 판매액을 구하고, 고객별로 정렬하시오.
-SELECT	name, SUM(saleprice)
+SELECT	NAME, SUM(saleprice)
 FROM	Customer, Orders
 WHERE	Customer.custid=Orders.custid
-GROUP BY	Customer.name
-ORDER BY	Customer.name;
+GROUP BY	Customer.NAME
+ORDER BY	Customer.NAME;
 
 --[질의 3-25] 고객의 이름과 고객이 주문한 도서의 이름을 구하시오. 
-SELECT	Customer.name, book.bookname
+SELECT	Customer.NAME, book.bookname
 FROM	Customer, Orders, Book
 WHERE	Customer.custid=Orders.custid AND Orders.bookid=Book.bookid;
 
 --[질의 3-26] 가격이 20,000원인 도서를 주문한 고객의 이름과 도서의 이름을 구하시오.
-SELECT	Customer.name, book.bookname
+SELECT	Customer.NAME, book.bookname
 FROM	Customer, Orders, Book
 WHERE	Customer.custid=Orders.custid AND Orders.bookid=Book.bookid
 			AND Book. price=20000;
 
 --[질의 3-27] 도서를 구매하지 않은 고객을 포함하여 고객의 이름과 고객이 주문한 도서의 판매가격을 구하시오.
-SELECT	Customer.name, saleprice
+SELECT	Customer.NAME, saleprice
 FROM	Customer LEFT OUTER JOIN Orders 
 			ON Customer.custid=Orders.custid;
 
-	SELECT Customer.name, saleprice
+	SELECT Customer.NAME, saleprice
 	FROM   CUSTOMER, ORDERS 
 	WHERE  CUSTOMER.custid=ORDERS.custid(+)
 
@@ -167,13 +167,13 @@ WHERE	price = (SELECT MAX(price)
                       FROM Book);
 
 --[질의 3-29] 도서를 구매한 적이 있는 고객의 이름을 검색하시오.
-SELECT	name
+SELECT	NAME
 FROM	Customer
 WHERE	custid IN (SELECT custid 
                         FROM Orders);
 
 --[질의 3-30] ‘대한미디어’에서 출판한 도서를 구매한 고객의 이름을 보이시오.
-SELECT	name
+SELECT	NAME
 FROM	Customer
 WHERE	custid IN(SELECT	custid
 			 FROM		Orders
@@ -190,16 +190,16 @@ WHERE	b1.price > (SELECT 	avg(b2.price)
 
 
 --[질의 3-32] 도서를 주문하지 않은 고객의 이름을 보이시오. 
-SELECT	name
+SELECT	NAME
 FROM	Customer
 MINUS
-SELECT	name
+SELECT	NAME
 FROM	Customer
 WHERE	custid IN (SELECT custid FROM Orders);
 
 --[질의 3-33] 주문이 있는 고객의 이름과 주소를 보이시오.
 
-SELECT	name, address
+SELECT	NAME, address
 FROM	Customer cs
 WHERE	EXISTS (SELECT *
 		         FROM	   Orders od
@@ -240,7 +240,7 @@ CREATE TABLE 	NewBook (
 --[질의 3-35] 다음과 같은 속성을 가진 NewCustomer 테이블을 생성하시오.
 CREATE TABLE	NewCustomer (
   custid		NUMBER	PRIMARY KEY,
-  name		VARCHAR2(40),
+  NAME		VARCHAR2(40),
   address		VARCHAR2(40),
   phone		VARCHAR2(30));
 
@@ -297,8 +297,8 @@ WHERE	custid=5;
 UPDATE	Customer
 SET		address=(SELECT	address
 			  FROM		Customer
-			  WHERE	name='김연아')
-WHERE	name ='박세리';
+			  WHERE	NAME='김연아')
+WHERE	NAME ='박세리';
 
 --[질의 3-49] Customer 테이블에서 고객번호가 5인 고객을 삭제한 후 결과를 확인하시오.
 DELETE	FROM	Customer

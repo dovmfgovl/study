@@ -152,17 +152,39 @@ SELECT NAME
  WHERE C.CUSTID = O.CUSTID
 GROUP BY NAME;
 
+--답)
+SELECT NAME
+    FROM customer
+ WHERE custid IN (SELECT custid FROM orders);
+
 --[질의 3-30] ‘대한미디어’에서 출판한 도서를 구매한 고객의 이름을 보이시오.
 SELECT NAME
   FROM customer c, book b, orders o
 WHERE C.CUSTID = O.CUSTID
   AND b.bookid = o.bookid
   AND publisher = '대한미디어';
+  
+--답)
+SELECT NAME
+    FROM customer
+ WHERE custid IN(SELECT custid
+                    FROM orders
+                  WHERE bookid IN(SELECT bookid
+                                    FROM book
+                                   WHERE publisher = '대한미디어'));
 
 --[질의 3-31] 출판사별로 출판사의 평균 도서 가격보다 비싼 도서를 구하시오.
+----------틀림.....--------------------
 SELECT bookname
   FROM book
  WHERE price > (SELECT avg(price) FROM book);
+ 
+--답)
+SELECT b1.bookname
+    FROM book b1
+  WHERE B1.PRICE > (SELECT avg(b2.price)
+                        FROM book b2
+                      WHERE b2.publisher = b1.publisher);
 
 --[질의 3-32] 도서를 주문하지 않은 고객의 이름을 보이시오.
 --[Error] Execution (171: 19): ORA-01427: 단일 행 하위 질의에 2개 이상의 행이 리턴되었습니다.
@@ -178,6 +200,14 @@ WHERE NOT EXISTS (
       SELECT 1
         FROM orders o
        WHERE C.CUSTID = O.CUSTID);
+       
+--답)
+SELECT NAME
+    FROM customer
+MINUS
+SELECT NAME
+    FROM customer
+ WHERE custid IN (SELECT custid FROM orders);
 
 --[질의 3-33] 주문이 있는 고객의 이름과 주소를 보이시오.
 SELECT NAME, address
