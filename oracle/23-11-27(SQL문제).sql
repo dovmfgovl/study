@@ -101,22 +101,61 @@ SELECT c.NAME, b.bookname
    AND B.BOOKID = O.BOOKID;
 
 --2.12 도서의 가격(book 테이블) 과 판매가격(Orders 테이블) 의 차이가 가장 많은 주문
-SELECT orderid
+SELECT *
   FROM orders NATURAL JOIN book
- WHERE (price-saleprice) = ( SELECT max(price-saleprice) FROM orders NATURAL JOIN book);
+ WHERE price-saleprice = ( SELECT max(price-saleprice) FROM orders NATURAL JOIN book);
 
-    
-
---2.13 도서의 파냄액 평균보다 자신의 구매액 평균이 더 높은 고객의 이름
+--2.13 도서의 판매액 평균보다 자신의 구매액 평균이 더 높은 고객의 이름
+SELECT NAME
+    FROM customer NATURAL JOIN orders
+ WHERE saleprice > (SELECT avg(saleprice) FROM orders)
+ GROUP BY NAME; 
 
 --문제3 마당서점에서 다음의 심화된 질문에 대해 SQL 문을 작성하시오
 
 --3.1 박지성이 구매한 도서의 출판사와 같은 출판사에서 도서를 구매한 고객의 이름
+SELECT NAME
+    FROM customer c, orders o, book b
+ WHERE C.CUSTID = O.CUSTID
+      AND O.BOOKID = B.BOOKID
+      AND NAME NOT LIKE '박지성'
+      AND publisher IN ( SELECT publisher 
+                                                FROM customer c, orders o, book b 
+                                            WHERE C.CUSTID = O.CUSTID
+                                                  AND O.BOOKID = B.BOOKID
+                                                  AND NAME LIKE '박지성');  
 
 --3.2 두 개 이상의 서로 다른 출판사에서 도서를 구매한 고객의 이름
-
+SELECT NAME
+    FROM customer c1
+  WHERE 2 >= 
+               ( SELECT count(DISTINCT publisher) FROM customer, orders, book
+                   WHERE CUSTOMER.CUSTID = ORDERS.CUSTID
+                        AND ORDERS.BOOKID = BOOK.BOOKID
+                        AND NAME LIKE C1.NAME);  
+                        
 --3.3 전체 고객의 30% 이상이 구매한 도서
+SELECT bookname
+    FROM book b1
+  WHERE  ((SELECT count(book.bookid) FROM book, orders
+                    WHERE book.bookid = orders.bookid
+                         AND book.bookid = b1.bookid) >= 0.3 * (SELECT count(*) FROM customer));
+                         
+-- book 테이블에서 b1 별칭을 사용하여 bookname 열을 선택합니다.
+SELECT bookname
+FROM book b1
+-- WHERE 절을 통해 다음 조건을 지정합니다.
+WHERE
+  -- 서브쿼리를 사용하여 book 테이블과 orders 테이블을 조인하고, bookid를 기준으로 조건을 걸어서 주문된 각 책의 수를 계산합니다.
+  (SELECT COUNT(book.bookid)
+   FROM book, orders
+   WHERE book.bookid = orders.bookid --orders.bookid와 동일한 결과 도출
+     -- 현재 주어진 bookid와 동일한 bookid를 가진 주문만 고려합니다.
+     AND book.bookid = b1.bookid) 
+  -- 계산된 주문 수가 모든 고객 수의 30% 이상인 경우에만 해당 조건이 충족됩니다.
+  >= 0.3 * (SELECT COUNT(*) FROM customer);
 
+                         
 --문제 4 다음 질의에 대해 DDL문과 DML 문을 작성하시오
 
 --4.1 새로운 도서('스포츠 세계','대한미디어','10000원')이 마당서점에 입고되었다. 삽입이 안 될 경우 필요한 데이터가 더 있는지 찾아보시오

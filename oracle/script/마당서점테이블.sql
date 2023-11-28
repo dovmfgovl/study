@@ -8,7 +8,7 @@ price NUMBER(8)
 
 CREATE TABLE Customer (
 custid NUMBER(2) PRIMARY KEY,
-name VARCHAR2(40),
+NAME VARCHAR2(40),
 address VARCHAR2(50),
 phone VARCHAR2(20)
 );
