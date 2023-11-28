@@ -1,3 +1,4 @@
+/*<TOAD_FILE_CHUNK>*/
 
 --[질의 4-1] -78과 +78의 절댓값을 구하시오.(ABS)
 
@@ -48,6 +49,7 @@ BEGIN
 END;
 /
 
+/*<TOAD_FILE_CHUNK>*/
 --[예제 5-4] Orders 테이블의 판매 도서에 대한 이익을 계산하는 프로시저를 작성하시오.
 
 CREATE OR REPLACE PROCEDURE proc_profit
@@ -81,7 +83,7 @@ BEGIN
     INSERT INTO book(bookid, bookname, price) VALUES(p_bookid, p_bookname, p_price);
     COMMIT;
     UPDATE book
-        set  
+        set price = p_price 
       WHERE bookid = p_bookid;
 END;
 
