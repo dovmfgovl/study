@@ -203,7 +203,7 @@ IS
     CURSOR price_cur IS
     SELECT publisher, bookname
         FROM book
-     WHERE price > ( SELECT avg(price) FROM book GROUP BY publisher);
+     WHERE price > ( SELECT avg(price) FROM book );
      p_publisher varchar2(100):='';
      p_bookname varchar2(100):='';
 BEGIN
@@ -216,15 +216,94 @@ BEGIN
     CLOSE price_cur;
 END;
 
+출력)
+SQL> exec proc_price;
+publisher : 대한미디어, 평균가보다 비싼 bookname : 축구의 이해
+publisher : 대한미디어, 평균가보다 비싼 bookname : 골프 바이블
+publisher : 이상미디어, 평균가보다 비싼 bookname : 야구의 추억
+
+PL/SQL 처리가 정상적으로 완료되었습니다.
+
 --2.4 고객별로 도서를 몇 권 구입했는지와 총구매액을 보이시오
+
+CREATE OR REPLACE PROCEDURE proc_buy
+IS
+    CURSOR buy_cur IS
+    SELECT NAME, count(bookid) AS countBook, sum(saleprice) AS sumPrice
+      FROM customer, orders
+     WHERE CUSTOMER.CUSTID = ORDERS.CUSTID
+    GROUP BY NAME
+    ORDER BY NAME; 
+    p_name varchar2(100):='';
+    p_countBook number(9):=0;
+    p_sumPrice number(9):=0;
+BEGIN
+    OPEN buy_cur;
+    LOOP
+        FETCH buy_cur INTO p_name, p_countBook, p_sumPrice;
+        exit WHEN buy_cur%NOTFOUND;
+        dbms_output.put_line(p_name||' 이(가) 구매한 도서는 '||p_countBook||'권이고, 총 구매액은 '||p_sumPrice||'원 입니다.');
+    END LOOP;
+    CLOSE buy_cur;                  
+END;
+
+출력)
+SQL> exec proc_buy;
+김연아 이(가) 구매한 도서는 2권이고, 총 구매액은 15000원 입니다.
+박지성 이(가) 구매한 도서는 3권이고, 총 구매액은 39000원 입니다.
+장미란 이(가) 구매한 도서는 3권이고, 총 구매액은 31000원 입니다.
+추신수 이(가) 구매한 도서는 2권이고, 총 구매액은 33000원 입니다.
+
+PL/SQL 처리가 정상적으로 완료되었습니다.
 
 --2.5 주문이 있는 고객의 이름과 주문 총액을 출력하고, 주문이 없는 고객은 이름만 출력하는 프로시저를 작성
 
+CREATE OR REPLACE PROCEDURE proc_name
+IS
+    CURSOR name_cur IS
+    SELECT NAME, sum(saleprice) AS sumPrice
+      FROM customer LEFT JOIN orders
+        ON CUSTOMER.CUSTID = ORDERS.CUSTID
+     GROUP BY NAME; 
+    p_name varchar2(40):='';
+    p_sumPrice number(9):=0;
+BEGIN
+    OPEN name_cur;
+    LOOP
+     FETCH name_cur INTO p_name, p_sumPrice;
+     exit WHEN name_cur%NOTFOUND;
+     dbms_output.put_line('고객 이름 : '||p_name||', 주문 총액 : '||p_sumPrice);
+    END LOOP;
+    CLOSE name_cur;
+END;
+
+출력)
+SQL> exec proc_name;
+고객 이름 : 박지성, 주문 총액 : 39000
+고객 이름 : 장미란, 주문 총액 : 31000
+고객 이름 : 김연아, 주문 총액 : 15000
+고객 이름 : 추신수, 주문 총액 : 33000
+고객 이름 : 박세리, 주문 총액 :
+
+PL/SQL 처리가 정상적으로 완료되었습니다.
 
 --3. 다음 PL/SQL 함수를 작성하시오 DB는 마당서점 이용
 
 
 --3.1 고객의 주문 총액을 계산하여 20000원 이상이면 '우수' 20000원 미만이면 '보통'을 반환하는 함수 Grade()를 작성하시오. 
+
+CREATE OR REPLACE FUNCTION grade(sale_total IN number)
+    RETURN varchar2 IS
+    v_st vatchar2(10);    
+BEGIN
+    IF sale_total IS NULL THEN
+        v_st := NULL;
+    ELSE 
+        SELECT decode(saleprice, (saleprice>=20000), '우수', (saleprice<20000), '보통')
+          FROM orders;
+    
+
+END;
 
 --Grade()를 호출하여 고객의 이름과 등급을 보이는 SQL도 작성하시오
 
