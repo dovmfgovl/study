@@ -80,33 +80,141 @@ END;
 CREATE OR REPLACE PROCEDURE proc_bookInsertOrUpdate(p_bookid IN number, p_bookname IN varchar2, p_price IN number)
 IS
 BEGIN
-    INSERT INTO book(bookid, bookname, price) VALUES(p_bookid, p_bookname, p_price);
+    --기존 레코드가 존재하는지 확인
+    DECLARE
+        p_count number;
+    BEGIN 
+        SELECT count(*) INTO p_count FROM book WHERE bookid = p_bookid;
+        
+        --존재하면 업데이트
+        IF p_count > 0 THEN
+             UPDATE book
+                set price = p_price 
+              WHERE bookid = p_bookid AND p_price > price;
+         ELSE
+            -- 존재하지 않으면 삽입
+             INSERT INTO book(bookid, bookname, price) VALUES(p_bookid, p_bookname, p_price);
+        END IF;
+      END;
     COMMIT;
-    UPDATE book
-        set price = p_price 
-      WHERE bookid = p_bookid;
 END;
-
---gpt
- SET price = p_price
-    WHERE bookid = p_bookid AND p_price > price;
-
-    -- 만약 업데이트된 행이 없다면, 더 높은 가격의 레코드가 없으므로 새로운 레코드 삽입
-    IF SQL%ROWCOUNT = 0 THEN
-        INSERT INTO book(bookid, bookname, price) VALUES(p_bookid, p_bookname, p_price);
-    END IF;
-
-    COMMIT;
-END;
-/
 
 --2. 다음 프로그램을 프로시저로 작성하고 실행하시오. DB는 마당서점을 이용
 
 --2.1 출판사가 '이상미디어' 인 도서의 이름과 가격을 보여주는 프로시저를 작성
+-- 여러 도서가 있는 경우 , 하나의 행만 출력하는 프리시저
+
+CREATE OR REPLACE PROCEDURE proc_publisher(p_publisher IN varchar2, msg OUT varchar2)
+IS
+     bookname varchar2(100);
+     price number(9);
+BEGIN
+    SELECT bookname, price INTO bookname, price
+        FROM book
+     WHERE publisher = p_publisher AND ROWNUM = 1; -- 최초 하나의 행만 선택
+     --선택된 행이 있는지 확인 . 없으면 메시지 출력되도록 설정
+     IF SQL%FOUND THEN
+        COMMIT;        
+        msg := p_publisher ||'출판사의 도서는 '|| bookname ||'이고, 가격은 '|| price || '원 이다.';
+     ELSE
+        msg := p_publisher || ' 출판사의 도서가 존재하지 않습니다.';
+     END IF;
+END;
+
+-- 여러 도서가 있는 경우, 모든 행을 출력하는 프리시저 -> bookname과 price가 출력 안 됨.....
+
+CREATE OR REPLACE PROCEDURE proc_publisher2(p_publisher IN varchar2, msg OUT varchar2)
+IS
+     bookname varchar2(100);
+     price number(9);
+BEGIN
+    FOR book_publisher IN (SELECT bookname, price INTO bookname, price
+        FROM book
+     WHERE publisher = p_publisher)
+     LOOP
+        COMMIT;
+         msg := p_publisher ||'출판사의 도서는 '|| bookname ||'이고, 가격은 '|| price || '원 이다.';
+     END LOOP;
+     --선택된 행이 있는지 확인 . 없으면 메시지 출력되도록 설정
+     IF SQL%FOUND THEN 
+        msg := p_publisher || ' 출판사의 도서가 존재하지 않습니다.';
+     END IF;
+END;
+
+-- 여러 도서가 있는 경우, 모든 행을 출력하는 refcursor 프리시저
+
+CREATE OR REPLACE PROCEDURE proc_publisher3(rc_publisher OUT sys_refcursor)
+IS
+BEGIN
+    OPEN rc_publisher
+    FOR SELECT bookname, price FROM book WHERE publisher = '이상미디어';
+END;
+
+출력) 
+SQL> variable rc_publisher refcursor;
+SQL> exec proc_publisher3(:rc_publisher);
+
+PL/SQL 처리가 정상적으로 완료되었습니다.
+
+SQL> print rc_publisher;
+
+BOOKNAME                                      PRICE
+---------------------------------------- ----------
+야구의 추억                           20000
+야구를 부탁해                         13000
 
 --2.2 출판사별로 출판사 이름과 도서의 판매 총액을 보이시오(Orders 테이블 이용)
+--cursor 사용: SELECT문이 여러 행을 반환할 수 있을 때, 커서를 사용하여 각 행을 반복적으로 처리한다.
 
---2.3 출판사별로 도서의 편균가보다 비싼 도서의 이름을 보이시오(예를 들어 A 출판사 도서의 평균가가 20,000원이라면 A출판사 도서 중 20000원 이상인 도서를 보이면 됨)
+CREATE OR REPLACE PROCEDURE proc_pub
+IS
+    CURSOR pub_cur IS
+    SELECT publisher, sum(saleprice) AS total
+        FROM book, orders
+     WHERE BOOK.BOOKID = ORDERS.BOOKID
+     GROUP BY publisher;
+     p_publisher varchar2(100) :='';
+     p_total number(9) :=0;
+BEGIN
+    OPEN pub_cur;
+    LOOP
+        FETCH pub_cur INTO p_publisher, p_total;
+        exit WHEN pub_cur%NOTFOUND;
+        dbms_output.put_line('publisher : ' || p_publisher || ', total saleprice : ' || p_total);
+    END LOOP;
+    COMMIT;
+    CLOSE pub_cur;
+END;
+
+출력)
+SQL> exec proc_pub;
+publisher : 굿스포츠, total saleprice : 20000
+publisher : 이상미디어, total saleprice : 46000
+publisher : 나무수, total saleprice : 12000
+publisher : 대한미디어, total saleprice : 21000
+publisher : Pearson, total saleprice : 19000
+
+PL/SQL 처리가 정상적으로 완료되었습니다.
+
+--2.3 출판사별로 도서의 평균가보다 비싼 도서의 이름을 보이시오(예를 들어 A 출판사 도서의 평균가가 20,000원이라면 A출판사 도서 중 20000원 이상인 도서를 보이면 됨)
+
+CREATE OR REPLACE PROCEDURE proc_price
+IS
+    CURSOR price_cur IS
+    SELECT publisher, bookname
+        FROM book
+     WHERE price > ( SELECT avg(price) FROM book GROUP BY publisher);
+     p_publisher varchar2(100):='';
+     p_bookname varchar2(100):='';
+BEGIN
+    OPEN price_cur;
+    LOOP
+        FETCH price_cur INTO p_publisher, p_bookname;
+        exit WHEN price_cur%NOTFOUND;
+        dbms_output.put_line('publisher : '||p_publisher||', 평균가보다 비싼 bookname : '||p_bookname);
+    END LOOP;
+    CLOSE price_cur;
+END;
 
 --2.4 고객별로 도서를 몇 권 구입했는지와 총구매액을 보이시오
 
