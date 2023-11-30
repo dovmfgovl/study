@@ -296,13 +296,18 @@ CREATE OR REPLACE FUNCTION grade(sale_total IN number)
     RETURN varchar2 IS
     v_st vatchar2(10);    
 BEGIN
-    IF sale_total IS NULL THEN
+    IF sale_total IS NULL OR sale_total = NULL THEN
         v_st := NULL;
     ELSE 
-        SELECT decode(saleprice, (saleprice>=20000), '우수', (saleprice<20000), '보통')
-          FROM orders;
+        SELECT 
+             CASE WHEN saleprice >= 20000 THEN '우수'
+                       WHEN saleprice < 20000 THEN '보통'
+             INTO  v_st
+          FROM orders
+         WHERE sale_total = sale_total;
+    END IF;
     
-
+    RETURN v_st;
 END;
 
 --Grade()를 호출하여 고객의 이름과 등급을 보이는 SQL도 작성하시오
