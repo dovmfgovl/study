@@ -1,0 +1,47 @@
+/*
+.containers {
+    height: 100vh;
+    display: grid;
+    grid-template-areas:
+    "header    header    header"
+    "sidebar leftcontent rightcontent1"
+    "sidebar leftcontent rightcontent2"
+    "footer    footer    footer";
+    grid-template-columns: 0.7fr 2fr 2fr;
+    grid-template-rows: 1fr 2fr 2fr 1fr;
+}
+
+.header {
+    background-color: palevioletred;
+    grid-area: header;
+}
+
+.sidebar {
+    background-color: lightgoldenrodyellow;
+    grid-area: sidebar;
+
+}
+
+.leftcontent {
+    background-color: cadetblue;
+    grid-area: leftcontent;
+
+}
+
+.rightcontent1 {
+    background-color: lightsteelblue;
+    grid-area: rightcontent1;
+    overflow: auto;
+}
+
+.rightcontent2 {
+    background-color: coral;
+    grid-area: rightcontent2;
+
+}
+
+.footer {
+    background-color: olive;
+    grid-area: footer;
+
+}*/
